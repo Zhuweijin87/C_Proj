@@ -25,7 +25,6 @@ int epoll_server_create(char *addr, int size)
 	return servfd;
 }
 
-/*添加fd监听*/
 int epoll_socket_add(int sockfd)
 {
 	struct epoll_event ev;
@@ -38,7 +37,6 @@ int epoll_socket_add(int sockfd)
 	return 0;
 }
 
-/*修改监听fd*/
 int epoll_socket_mod(int sockfd, int mode)
 {
 	struct epoll_event ev;
@@ -56,12 +54,20 @@ int epoll_socket_mod(int sockfd, int mode)
 
 int epoll_socket_del(int sockfd)
 {
-
+	
 }
 
-int epoll_server_accept()
+int epoll_server_accept(int servfd)
 {
+	int clientfd;
+	clientfd = socket_accept(servfd);
+	if(clientfd == -1){
+		
+	}
 	
+	epoll_socket_add(cleintfd);
+
+	return 0;
 }
 
 int epoll_handle(int servfd, void *(*pread)(void *argv), void *argr, void *(*pwrite)(void *argv), void *argw)
