@@ -13,4 +13,4 @@ socket:
 #all data struct like list, queue, stack, tree etc.
 struct:
 	list.h
-	list.c
+	list.c : list create, add, delete, modify
