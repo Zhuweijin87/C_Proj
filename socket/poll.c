@@ -53,6 +53,7 @@ int t_poll_accept(int srvfd)
 	clientfd = socket_accept(srvfd);
 	if(clientfd == -1)
 		return -1;
+	poll_fd_add(clientfd);
 	return 0;
 }
 

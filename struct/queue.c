@@ -40,7 +40,6 @@ int Queue_Push(Queue **q, char *buffer)
 		return 0;
 	}
 	
-	/*队列最大值判断*/
 	if(queue_max_size == pq->qsize + 1) return -1;
 
 	pq->tail->next = qnode;
@@ -67,21 +66,4 @@ int Queue_Pop(Queue **q, char *buffer)
 	return 0;
 }
 
-int main()
-{
-	Queue	*q = NULL;
-	q = Queue_Create(20);
-	
-	printf("q create\n");
-	Queue_Push(&q, "ZHuweijin");
-	Queue_Push(&q, "Just do it");
 
-	char	msg[20] = {0};
-
-	Queue_Pop(&q, msg);
-	printf("msg:%s\n", msg);
-	memset(msg, 0, sizeof(msg));
-	Queue_Pop(&q, msg);
-	printf("msg:%s\n", msg);
-	return 0;
-}

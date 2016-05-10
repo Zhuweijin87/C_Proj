@@ -16,7 +16,7 @@ int socket_create(char *ipaddr)
 	int		addr_port;
 	if(sscanf(ipaddr, "%[^:]:%d", addr_ip, &addr_port) != 2){
 		fprintf(stderr, "fail to split address & port\n");
-		return -1
+		return -1;
 	}
 
 	if(bind(servfd, (struct sockaddr *)&server, sizeof(struct sockaddr)) == -1){
