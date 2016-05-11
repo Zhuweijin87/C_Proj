@@ -21,7 +21,7 @@ struct link_list *list_create(DataType type, size_t size)
 	if(null == list) return null;
 	list->data_type = type;
 	list->data_size = size;
-	list->head = list->tail = NULL;
+	list->head = NULL;
 	return (struct link_list *)list;
 }
 
@@ -64,56 +64,85 @@ int list_insert_at(struct link_list **list, int pos, void *data)
 	}
 	
 	if(-1 == pos){
+		struct link_node *ptail = link_get_tail(*list);
+		ptail->next = pnode;
+		/*
 		(*list)->tail->next = pnode;
 		(*list)->tail = pnode;
+		*/
 		return 0;
-	}
-
-	if(pos > list_get_size(*list))	return -1;
-	
-	plist = (*list)->head;
-	while(plist != null){
-		if(index == pos){
-			pnode->next = plist->next;
-			plist->next = pnode;
-			break;
-		}
-		plist = plist->next;
-		index++;
 	}
 	
 	return 0;
 }
 
-/*pos 0: delete from list head, -1 delete from list tail*/
-int list_delete_at(struct link_list **list, int pos)
+struct link_node *list_find_prenode(struct link_list *list, int pos)
 {
-	struct link_node *pnode, *preNode;
+	if(null == list) return null;
+	if(pos > list_get_size(list) || 1 == pos) return null;
 	
-	if(null == *list) return -1;
-	if(pos > list_get_size(*list)) return -1;
+	int count = 1;
+	struct link_node *pnode = list->head;
+	while(pnode){
+		if(count == pos -1)
+			break;
+		pnode = pnode->next;
+		count++;
+	}
+	return pnode;
+}
+
+struct link_node *list_get_tail(struct link_list *list)
+{
+	if(null == list || null == list->head) return null;
+	struct link_node *pnode;
+	pnode = list->head;
+	while(pnode){
+		if(null == pnode->next)
+			break;
+		pnode = pnode->next;
+	}
+	return pnode;
+}
+
+/*pos 0: delete from list head, -1 delete from list tail*/
+int list_delete_at(struct link_list **list, unsigned int pos)
+{
+	struct link_node *pnode, *prevNode;
+	struct link_list *plist = *list;
+	if(null == plist || null == plist->head) return -1;
 	
 	if(0 == pos){
-		pnode = (*list)->head;
-		(*list)->head = (*list)->head->next;
-		free(pnode);
+		pnode = plist->head;
+		plist->head = plist->head->next;
+		lfree(pnode);
 		pnode = null;
 		return 0;
 	}
-
-	if(-1 == pos){
-		preNode = (*list)->head;
-		while(preNode->next != null){
-			if(preNode->next->next == null)
-				break;
-			preNode = preNode->next;
+	else if(-1 == pos){
+		prevNode = list_find_prenode(plist, list_get_size(plist));
+		if(null == prevNode){
+			free(plist->head);
+			plist->head = null;
+		}else{
+			//printf("tail node:%s\n", prevNode->data);
+			pnode = prevNode->next;
+			prevNode->next = null;
+			lfree(pnode);
+			pnode = null;
 		}
-
-		pnode = (*list)->tail;
-		preNode->next = null;
-		(*list)->tail = preNode;
+	}
+	else{
+		#if 1
+		prevNode = list_find_prenode(plist, pos);
+		if(null == prevNode){
+			return -1;
+		}
+		pnode = prevNode->next;
+		prevNode->next = prevNode->next->next;
 		free(pnode);
 		pnode = null;
+		#endif
 	}
 
 	return 0;
@@ -137,3 +166,4 @@ int list_reverse(struct link_list **list)
 
 	return 0;
 }
+

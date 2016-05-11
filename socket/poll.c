@@ -1,11 +1,11 @@
 #include "poll.h"
 
 /* static argument */
-static int LOC_POLLFD_SIZE;
-static int LOC_MAX_FD;
-static struct pollfd *clientfds;
+static int local_pollfd_size;
+static int local_maxfd;
+static struct pollfd *local_pfdset;
 
-int t_poll_create(char *sockaddr, int size)
+int Tpoll_init(char *sockaddr, int size)
 {
 	int servfd;
 	servfd = socket_create(sockaddr);
@@ -13,67 +13,52 @@ int t_poll_create(char *sockaddr, int size)
 		return -1;
 	}
 
-	LOC_POLLFD_SIZE = size > 0 ? size : DEFAULT_FD_SIZE;
+	local_pollfd_size = size > 0 ? size : DEFAULT_FD_SIZE;
 	
-	clientfds = malloc(sizeof(struct pollfd) * LOC_POLLFD_SIZE);
-	for(int i=0; i<LOC_POLL_FD; i++){
-		clientfds[i] = -1;
+	local_pfdset = malloc(sizeof(struct pollfd) * local_pollfd_size);
+	for(int i=0; i<local_pollfd_size; i++){
+		local_pfdset[i].fd = -1;
 	}
 	
 	return servfd;
 }
 
-static int poll_fd_add(int sockfd)
+int tpoll_add(int sockfd)
 {
-	int i;
-	for(i=0; i<LOC_POLLFD_SIZE; i++){
-		if(clientfds[i] == -1){
-			clientfds[i] = sockfd;
-			break;
-		}
-	}
 	return 0;
 }
 
-static int poll_fd_del(int sockfd)
+int tpoll_del(int sockfd)
 {
-	int i;
-	for(i=0; i<LOC_POLLFD_SIZE; i++){
-		if(clientfd[i] == sockfd){
-			clientfd[i] = -1;
-			break;
-		}
-	}
 	return 0;
 }
 
-int t_poll_accept(int srvfd)
+static int tpoll_accept(int srvfd)
 {
 	int clientfd;
 	clientfd = socket_accept(srvfd);
 	if(clientfd == -1)
 		return -1;
-	poll_fd_add(clientfd);
-	return 0;
+	return poll_add(clientfd);
 }
 
-int t_poll_handle(int servfd, void *(*pread)(void *ag_r), void *(*pwrite)(void *ag_w))
+int Tpoll_handle(int servfd, void *(*pread)(void *ag_r), void *(*pwrite)(void *ag_w))
 {
 	int	ret = 0, nfds_for_ready;
 
-	clientfds[0].fd = servfd;
-	clientfds[0].events = POLLIN;
-	LOC_MAX_FD = servfd;
+	local_pfdset[0].fd = servfd;
+	local_pfdset[0].events = POLLIN;
+	local_maxfd = servfd;
 	
 	while(1){
-		nfds_for_ready = poll(clientfds, LOC_MAX_FD + 1, INFTIM);
+		nfds_for_ready = poll(local_pfdset, local_maxfd + 1, -1);
 		if(nfds_for_ready == -1){
 			fprintf(stderr, "fail to poll:%s", strerror(errno));
 			ret = -1;
 			break;
 		}
 
-		if(clientfds[0].revents & POLLIN){
+		if(local_pfdset[0].revents & POLLIN){
 			
 		}else{
 
@@ -81,3 +66,4 @@ int t_poll_handle(int servfd, void *(*pread)(void *ag_r), void *(*pwrite)(void *
 	}
 	return 0;
 }
+

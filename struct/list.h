@@ -25,6 +25,8 @@ struct link_list{
 };
 
 #define lmalloc(size) malloc(size)
+#define lfree(p)	  free(p)
+
 #define null NULL
 
 struct link_list *list_create(DataType type, size_t size);

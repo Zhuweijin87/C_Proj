@@ -1,11 +1,14 @@
-#include "socket.h"
+#include "epoll.h"
 
-static int gls_epollfd;  /*globe localize static*/
-static int event_size;
-static struct epoll_event *ee;
+struct t_epoll_events {
+	int 	eSize;
+	struct epoll_event *peSet;
+};
+static int local_epollfd;  /*localize static variable*/
+static struct t_epoll_events local_pevent;
 
-/*初始化epoll server*/
-int epoll_server_create(char *addr, int size)
+/* epoll server */
+int Tepoll_init(char *addr, int size)
 {
 	int	servfd;
 	
@@ -14,30 +17,44 @@ int epoll_server_create(char *addr, int size)
 		return -1;
 	}
 
-	gls_epollfd = epoll_create(size);
-	if(-1 == epollfd){
+	local_epollfd = epoll_create(size);
+	if(-1 == local_epollfd){
 		fprintf(stderr, "fail to epoll create:%s\n", strerror(errno));
 		return -1;
 	}
 
-	event_size = size;
-	ee = malloc(sizeof(struct epoll_event) * size);
+	local_pevent.eSize = size > 0 ? size : 512;
+	local_pevent.peSet = malloc(sizeof(struct epoll_event) * local_pevent.eSize);
+	if(null == local_pevent.peSet)
+		return -1;
+
+	if(epoll_fd_add(servfd) == -1)
+		return -1;
 	return servfd;
 }
 
-int epoll_socket_add(int sockfd)
+void epoll_close(int servfd)
+{
+	close(servfd);
+	close(local_epollfd);
+	free(local_pevent.peSet);
+}
+
+/* add fd to epoll */
+int epoll_fd_add(int sockfd)
 {
 	struct epoll_event ev;
-	ev.events = EPOLLLET | EPOLLIN;
+	ev.events = EPOLLET | EPOLLIN;
 	ev.data.fd = sockfd;
-	if(epoll_ctl(gls_epollfd, EPOLL_CTL_ADD, sockfd, &ev) == -1){
+	if(epoll_ctl(local_epollfd, EPOLL_CTL_ADD, sockfd, &ev) == -1){
 		fprintf(stderr, "fail to epoll operate(add):%s\n", strerror(errno));
 		return -1;
 	}
 	return 0;
 }
 
-int epoll_socket_mod(int sockfd, int mode)
+/* modify epoll fd status */
+int epoll_fd_mod(int sockfd, int mode)
 {
 	struct epoll_event ev;
 	ev.data.fd = sockfd;
@@ -45,50 +62,68 @@ int epoll_socket_mod(int sockfd, int mode)
 		ev.events = EPOLLET | EPOLLIN;
 	else if(mode == FD_WRITABLE)
 		ev.events = EPOLLET | EPOLLOUT;
-	if(epoll_ctl(gls_epollfd, EPOLL_CTL_MOD, sockfd, &ev) == -1){
+	if(epoll_ctl(local_epollfd, EPOLL_CTL_MOD, sockfd, &ev) == -1){
 		fprintf(stderr, "fail to epoll operate(modify):%s\n", strerror(errno));
 		return -1;
 	}
 	return 0;
 }
 
-int epoll_socket_del(int sockfd)
+/* delete epoll fd*/
+int epoll_fd_del(int sockfd)
 {
-	
+	struct epoll_event ee;
+	ee.events = EPOLLIN | EPOLLET;
+	ee.data.fd = sockfd;
+	if(epoll_ctl(local_epollfd, EPOLL_CTL_DEL, sockfd, &ee) == -1){
+		fprintf(stderr, "fail to epoll operate(delete):%s\n", strerror(errno));
+		return -1;
+	}
+	return 0;
 }
 
-int epoll_server_accept(int servfd)
+int epoll_accept(int servfd)
 {
 	int clientfd;
 	clientfd = socket_accept(servfd);
 	if(clientfd == -1){
-		
+		return -1;
 	}
-	
-	epoll_socket_add(cleintfd);
-
-	return 0;
+	return epoll_fd_add(clientfd);
+	//return 0;
 }
 
-int epoll_handle(int servfd, void *(*pread)(void *argv), void *argr, void *(*pwrite)(void *argv), void *argw)
+int Tepoll_handle(int servfd, void *(*pread)(void *argv), void *argr, void *(*pwrite)(void *argv), void *argw)
 {
-	int nfds;
+	int nfds, sockfd;
+	struct epoll_event *pe = local_pevent.peSet;
 
-	nfds = epoll_wait(epollfd, ee, event_size, -1);
+EPOLL_CYCLE_WATCH:
+	nfds = epoll_wait(local_epollfd, pe, local_pevent.eSize, -1);
 	if(-1 == nfds){
 		fprintf(stderr, "fail to epoll wait:%s\n", strerror(errno));
 		return -1;
 	}
 	
 	for(int i=0; i<nfds; i++){
-		if(servfd == ee[i].data.fd){
-
-		}else if(ee[i].events & EPOLLIN){
-
-		}else if(ee[i].events & EPOLLOUT){
-
+		if(servfd == pe[i].data.fd){
+			/*handle new client epoll*/
+			sockfd = pe[i].data.fd;
+			epoll_accept(sockfd);
+		}else if(pe[i].events & EPOLLIN){
+			/*handle read from epoll fd*/
+			fprintf(stderr, "read fd message\n");
+			if(null == pread){ continue; }
+			pread(argr);
+		}else if(pe[i].events & EPOLLOUT){
+			/*handle write to epoll fd*/
+			fprintf(stderr, "write fd message\n");
+			if(null == pwrite) { continue; }
+			pwrite(argw);
 		}
 	}
+	goto EPOLL_CYCLE_WATCH;
+
 	return 0;
 }
 
