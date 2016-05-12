@@ -1,5 +1,7 @@
 #include "list.h"
 
+struct link_node *list_get_tail(struct link_list *list);
+
 static struct link_node *link_node_create(DataType dType, size_t size, void *data)
 {
 	struct link_node *node = lmalloc(sizeof(struct link_node));
@@ -41,41 +43,6 @@ int list_get_size(struct link_list *list)
 	return size;
 }
 
-/*0: represent list head, -1: represent list tail*/
-int list_insert_at(struct link_list **list, int pos, void *data)
-{
-	int index = 1;
-	struct link_node *pnode, *plist;
-
-	if(null == *list)	return -1;
-
-	pnode = link_node_create((*list)->data_type, (*list)->data_size, data);
-	if(null == pnode)	return -1;
-
-	if(null == (*list)->head){
-		(*list)->head = (*list)->tail = pnode;
-		return 0;
-	}
-
-	if(0 == pos){
-		pnode->next = (*list)->head;
-		(*list)->head = pnode;
-		return 0;
-	}
-	
-	if(-1 == pos){
-		struct link_node *ptail = link_get_tail(*list);
-		ptail->next = pnode;
-		/*
-		(*list)->tail->next = pnode;
-		(*list)->tail = pnode;
-		*/
-		return 0;
-	}
-	
-	return 0;
-}
-
 struct link_node *list_find_prenode(struct link_list *list, int pos)
 {
 	if(null == list) return null;
@@ -103,6 +70,41 @@ struct link_node *list_get_tail(struct link_list *list)
 		pnode = pnode->next;
 	}
 	return pnode;
+}
+
+/*0: represent list head, -1: represent list tail*/
+int list_insert_at(struct link_list **list, int pos, void *data)
+{
+	int index = 1;
+	struct link_node *pnode, *plist;
+
+	if(null == *list)	return -1;
+
+	pnode = link_node_create((*list)->data_type, (*list)->data_size, data);
+	if(null == pnode)	return -1;
+
+	if(null == (*list)->head){
+		(*list)->head = (*list)->tail = pnode;
+		return 0;
+	}
+
+	if(0 == pos){
+		pnode->next = (*list)->head;
+		(*list)->head = pnode;
+		return 0;
+	}
+	
+	if(-1 == pos){
+		struct link_node *ptail = list_get_tail(*list);
+		ptail->next = pnode;
+		/*
+		(*list)->tail->next = pnode;
+		(*list)->tail = pnode;
+		*/
+		return 0;
+	}
+	
+	return 0;
 }
 
 /*pos 0: delete from list head, -1 delete from list tail*/
@@ -167,3 +169,8 @@ int list_reverse(struct link_list **list)
 	return 0;
 }
 
+int list_sort_asc(struct link_list **list)
+{
+
+	return 0;
+}
