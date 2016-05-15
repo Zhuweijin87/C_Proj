@@ -13,6 +13,7 @@ struct map_node{
 struct map{
 	int keyType;
 	int valueType;
+	int dataSize;
 	struct link_list *maplist;
 };
 

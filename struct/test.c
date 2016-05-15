@@ -57,5 +57,13 @@ int main()
 	list_delete_at(&list, 3);
 	show(list);
 #endif
+
+#if 0
+	struct MAP *map = Map_Create(KEY_STRING, TYPE_STRING, 256);
+	map_put(map, "method", "GET / HTTP1.0");
+	map_put(map, "connect", "localhost:9090")
+
+	map_get(map, "method", r.method);
+#endif
 	return 0;
 }
