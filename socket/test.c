@@ -2,13 +2,16 @@
 
 void *OnRecv(void *argv)
 {
-	printf("recv");
+	char	recvMsg[512] = {'\0'};
+	int sockfd = *(int *)argv;
+	epoll_read(sockfd, recvMsg);
+	printf("recv: %s\n", recvMsg);
 	return (void *)0;
 }
 
 void *OnSend(void *argv)
 {
-	printf("send");
+	printf("send\n");
 	return (void *)0;
 }
 
@@ -21,7 +24,7 @@ int main()
 		return -1;
 	printf("epoll create ok: %d\n", servfd);
 	
-	Tepoll_handle(servfd, OnRecv, NULL, OnSend, NULL);
+	Tepoll_handle(servfd, &OnRecv, NULL, &OnSend, NULL);
 	
 	epoll_close(servfd);
 #endif

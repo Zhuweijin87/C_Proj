@@ -93,6 +93,16 @@ int epoll_accept(int servfd)
 	//return 0;
 }
 
+int epoll_read(int sockfd, char *recvBuff)
+{
+	return socket_recv(sockfd, recvBuff);	
+}
+
+int epoll_write(int sockfd, char *sendBuff)
+{
+	return socket_send(sockfd, sendBuff);
+}
+
 int Tepoll_handle(int servfd, void *(*pread)(void *argv), void *argr, void *(*pwrite)(void *argv), void *argw)
 {
 	int nfds, sockfd;
@@ -113,13 +123,12 @@ EPOLL_CYCLE_WATCH:
 		}else if(pe[i].events & EPOLLIN){
 			/*handle read from epoll fd*/
 			fprintf(stderr, "read fd message\n");
-			if(null == pread){ continue; }
-			pread(argr);
+			sockfd = pe[i].data.fd;
+			(*pread)(&sockfd);
 		}else if(pe[i].events & EPOLLOUT){
 			/*handle write to epoll fd*/
 			fprintf(stderr, "write fd message\n");
-			if(null == pwrite) { continue; }
-			pwrite(argw);
+			(*pwrite)(argw);
 		}
 	}
 	goto EPOLL_CYCLE_WATCH;

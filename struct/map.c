@@ -1,39 +1,79 @@
 #include "map.h"
 
-struct map *map_create(int keyType, int valueType, int dataSize)
+struct Map *Map_Create(int keyType, int valType, size_t size)
 {
-	struct map *pm = malloc(sizeof(struct map));
-	if(null == pm) return null;
-
-	pm->keyType = keyType;
-	pm->valueType = valueType;
-	pm->dataSize = size;
-	pm->maplist = list_create(TYPE_STRUCT, sizeof(struct map_node));
-	if(null == pm->maplist) return null;
-	return pm;
+	struct Map *map = malloc(sizeof(struct Map));
+	map->key_type = keyType;
+	map->val_type = valType;
+	map->data_size = size;
+	map->head = null;
+	return map;
 }
 
-static struct map_node map_node_create(struct map *map, void *key, void *value)
+void Map_Close(struct Map **map)
 {
-	struct map_node *p = malloc(sizeof(struct map_node));
-	if(map->keyType == KEY_INT)
-		p->key.int_key = *(int *)key;
-	if(map->keyType == KEY_STRING)
-		strncpy(p->key.str_key, (char *)key, 64);
-	memcpy(p->value, value, map->dataSize);
-	return p;
+	if(null == *map || null == (*map)->head)
+		return ;
+
+	while((*map)->head){
+		free((*map)->head);
+		(*map)->head = (*map)->head->next;
+	}
+	free((*map));
+	*map = null;
+	return ;
 }
 
-int map_put(struct map *map, void *key, void *value)
+struct map_node *map_node_create(int keyType, void *key, void *val, size_t valSize)
 {
-	struct map_node *p = map_node_create(map, key, value);
-	if(null == p) return -1;
-	return link_insert_at(&(pm->maplist), 0, p);
+	struct map_node *mapnode = malloc(sizeof(struct map_node));
+	if(keyType == KEY_INT)
+		mapnode->key.int_key = *(int *)key;
+	if(keyType == KEY_STRING)
+		strncpy(mapnode->key.str_key, (char *)key, 64);
+	/*
+	mapnode->value = malloc(valSize);
+	memcpy(mapnode->value, val, valSize);
+	*/
+	mapnode->value = val;
+	mapnode->next = null;
+	return mapnode;
 }
 
-void *map_get(struct map *pm, void *key)
+int map_put(struct Map *map, void *key, void *val)
 {
-	struct map_node *p;
-	
+	struct map_node *pnode = map_node_create(map->key_type, key, val, map->data_size);
+	if(null == map->head){
+		map->head = pnode;
+	}else{
+		pnode->next = map->head;
+		map->head = pnode;
+	}
 	return 0;
 }
+
+int map_get(struct Map *map, void *key, void **val)
+{
+	if(null == map || null == map->head){
+		*val = null;
+		return -1;
+	}
+	
+	struct map_node *p = map->head;
+	while(p){
+		if( (map->key_type == KEY_INT && p->key.int_key == *(int *)key) ||
+			(map->key_type == KEY_STRING && strcmp(p->key.str_key, (char *)key) == 0)){
+			break;
+		}
+		p = p->next;
+	}
+	if(null == p){
+		return -1;
+	}
+
+	/* Note Memory Leak if size of val is out of*/
+	//memcpy(val, p->value, 20);
+	*val = p->value;
+	return 0;
+}
+
