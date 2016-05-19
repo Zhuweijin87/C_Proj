@@ -25,11 +25,25 @@ int Tpoll_init(char *sockaddr, int size)
 
 int tpoll_add(int sockfd)
 {
+	for(int i=0; i<local_maxfd; i++){
+		if(local_pfdset[i] == -1){
+			local_pfdset[i].fd = sockfd;
+			local_pfdset[i].events = POLLIN;
+			break;
+		}
+	}
 	return 0;
 }
 
 int tpoll_del(int sockfd)
 {
+	for(int i=0; i<local_maxfd; i++){
+		if(local_pfdset[i] == sockfd){
+			local_pfdset[i].fd == -1;
+			close(sockfd);
+			break;
+		}
+	}
 	return 0;
 }
 
@@ -39,10 +53,10 @@ static int tpoll_accept(int srvfd)
 	clientfd = socket_accept(srvfd);
 	if(clientfd == -1)
 		return -1;
-	return poll_add(clientfd);
+	return tpoll_add(clientfd);
 }
 
-int Tpoll_handle(int servfd, void *(*pread)(void *ag_r), void *(*pwrite)(void *ag_w))
+int Tpoll_handle(int servfd, void *(*pread)(void *ags), void *(*pwrite)(void *ags))
 {
 	int	ret = 0, nfds_for_ready;
 
@@ -59,9 +73,10 @@ int Tpoll_handle(int servfd, void *(*pread)(void *ag_r), void *(*pwrite)(void *a
 		}
 
 		if(local_pfdset[0].revents & POLLIN){
-			
+			/*client request connect*/
+			tpoll_accept(servfd);
 		}else{
-
+			
 		}
 	}
 	return 0;
