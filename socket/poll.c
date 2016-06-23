@@ -26,7 +26,7 @@ int Tpoll_init(char *sockaddr, int size)
 int tpoll_add(int sockfd)
 {
 	for(int i=0; i<local_maxfd; i++){
-		if(local_pfdset[i] == -1){
+		if(local_pfdset[i].fd == -1){
 			local_pfdset[i].fd = sockfd;
 			local_pfdset[i].events = POLLIN;
 			break;
@@ -38,7 +38,7 @@ int tpoll_add(int sockfd)
 int tpoll_del(int sockfd)
 {
 	for(int i=0; i<local_maxfd; i++){
-		if(local_pfdset[i] == sockfd){
+		if(local_pfdset[i].fd == sockfd){
 			local_pfdset[i].fd == -1;
 			close(sockfd);
 			break;

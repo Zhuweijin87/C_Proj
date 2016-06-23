@@ -95,7 +95,13 @@ int epoll_accept(int servfd)
 
 int epoll_read(int sockfd, char *recvBuff)
 {
-	return socket_recv(sockfd, recvBuff);	
+	int ret;
+	ret = socket_recv(sockfd, recvBuff);	
+	if(ret == -1)
+	{
+		epoll_fd_del(sockfd);
+	}
+	return 0;
 }
 
 int epoll_write(int sockfd, char *sendBuff)
@@ -122,13 +128,12 @@ EPOLL_CYCLE_WATCH:
 			epoll_accept(sockfd);
 		}else if(pe[i].events & EPOLLIN){
 			/*handle read from epoll fd*/
-			fprintf(stderr, "read fd message\n");
 			sockfd = pe[i].data.fd;
 			(*pread)(&sockfd);
 		}else if(pe[i].events & EPOLLOUT){
 			/*handle write to epoll fd*/
-			fprintf(stderr, "write fd message\n");
-			(*pwrite)(argw);
+			sockfd = pe[i].data.fd;
+			(*pwrite)(&sockfd);
 		}
 	}
 	goto EPOLL_CYCLE_WATCH;
