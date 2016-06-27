@@ -9,6 +9,7 @@ struct mem_node_s{
 	void	*start;
 	int		size;
 	struct  mem_node_s *next;
+	struct	mem_node_s *prev;
 };
 
 typedef struct mem_node_s mem_node_t;

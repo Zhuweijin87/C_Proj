@@ -71,7 +71,7 @@ int map_get(struct Map *map, void *key, void **val)
 		return -1;
 	}
 
-	/* Note Memory Leak if size of val is out of*/
+	/* Note Memory Leak if size of val is out of range*/
 	//memcpy(val, p->value, 20);
 	*val = p->value;
 	return 0;

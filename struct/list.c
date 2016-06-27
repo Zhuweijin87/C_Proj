@@ -169,8 +169,3 @@ int list_reverse(struct link_list **list)
 	return 0;
 }
 
-int list_sort_asc(struct link_list **list)
-{
-
-	return 0;
-}

@@ -36,6 +36,7 @@ static mem_node_t *mem_node_create(mempool_t *pool, int size)
 	node->start = (void *)node + MEM_NODE_SIZE;
 	node->size = size;
 	node->next = null;
+	node->prev = null;
 
 	pool->used_size += size;
 	pool->ptr_curr += size;
@@ -43,44 +44,72 @@ static mem_node_t *mem_node_create(mempool_t *pool, int size)
 	return node;
 }
 
-static void mempool_node_list_add(mem_node_t *nodelist, mem_node_t *node)
+static int mempool_alloc_list_put(mempool_t *pool, mem_node_t *node)
 {
-	mem_node_t		*temp;
-	if(nodelist == null || node == null)
-		return ;
+	if(pool == null || node == null)
+		return -1;
 	
-	if(nodelist == null){
-		nodelist = node;
-	}else{
-		temp = nodelist;
-		node->next = temp;
-		temp = node;
+	if(pool->alloc_list == null)
+		pool->alloc_list = node;
+	else
+	{
+		pool->alloc_list->prev = node;
+		node->next = pool->alloc_list;
+		pool->alloc_list = node;
 	}
-
-	return ;
+	return 0;
 }
 
-static mem_node_t *mempool_alloc_list_get(mem_node_t *alloc_list, void *start)
+static mem_node_t *mempool_alloc_list_get(mempool_t *pool, void *start)
 {
 	mem_node_t		*temp;
 
-	temp = alloc_list;
-	while(temp){
+	temp = pool->alloc_list;
+	while(temp)
+	{
 		if(temp->start == start){
+			if(temp->prev == null)
+				pool->alloc_list = temp->next;
+			else{
+				temp->prev->next = temp->next;
+				temp->next->prev = temp->prev;
+			}
 			return temp;
 		}
 		temp = temp->next;
 	}
+	
 	return null;
 }
 
-static mem_node_t *mempool_free_list_get(mem_node_t *free_list, int size)
+static int mempool_free_list_put(mempool_t *pool, mem_node_t *node)
+{
+	if(pool == null || node == null)
+		return -1;
+	
+	if(pool->free_list == null)
+		pool->free_list = node;
+	else
+	{
+		pool->free_list->prev = node;
+		node->next = pool->free_list;
+		pool->free_list = node;
+	}
+	
+	return 0;
+}
+
+static mem_node_t *mempool_free_list_get(mempool_t *pool, int size)
 {
 	mem_node_t		*temp;
-	temp = free_list;
+	
+	temp = pool->free_list;
 	while(temp){
-		if(temp->size <= size){
-			return temp;
+		if(temp->size >= size){
+			if(temp->prev == null)
+				pool->free_list = pool->free_list->next;
+			else
+				temp->prev->next = temp->next;
 		}
 		temp = temp->next;
 	}
@@ -94,7 +123,7 @@ void *mempool_alloc(mempool_t *pool, int size)
 		return null;
 
 	if(pool->free_list != null)
-		pnode = mempool_free_list_get(pool->free_list, size);
+		pnode = mempool_free_list_get(pool, size);
 
 	if(pnode == null)
 		pnode = mem_node_create(pool, size);
@@ -102,29 +131,57 @@ void *mempool_alloc(mempool_t *pool, int size)
 	if(pnode == null)
 		return null;
 	
-	mempool_node_list_add(pool->alloc_list, pnode);
-	
+	mempool_alloc_list_put(pool, pnode);
+
 	return (void *)pnode->start;
+}
+
+void mempool_free(mempool_t *pool, void **node)
+{
+	mem_node_t 		*temp;
+
+	temp = mempool_alloc_list_get(pool, *node);
+	if(temp == null){
+		return;
+	}
+	
+	memset(temp->start, 0, temp->size);
+
+	temp->prev = temp->next = null;
+
+	mempool_free_list_put(pool, temp);
+
+	*node = null;
+
+	return ;
+}
+
+void showmempool(mempool_t *pool)
+{
+	mem_node_t *node;
+	node = pool->alloc_list;
+	printf("alloc info:\n");
+	while(node){
+		printf("\tnode info: %d : %d\n", node, node->start);
+		node = node->next;
+	}
+	
+	printf("free info:\n");
+	node = pool->free_list;
+	while(node){
+		printf("\tnode info: %d : %d\n", node, node->start);
+		node = node->next;
+	}
+
+	return ;
 }
 
 void mempool_clean(mempool_t *pool)
 {
-	memset(pool->ptr_init, 0, pool->size);
+	memset(pool->ptr_init, 0, pool->init_size);
 	pool->used_size = 0;
 	pool->ptr_curr = pool->ptr_init;
 	pool->alloc_list = pool->free_list = null;
-}
-
-void mempool_free(mempool_t *pool, void *node)
-{
-	mem_node_t 		*temp;
-	temp = mempool_alloc_list_get(pool->alloc_list, node);
-	if(temp == null)
-		return;
-	
-	memset(temp->start, 0, temp->size);
-	mempool_node_list_add(pool->free_list, node);
-	return ;
 }
 
 void mempool_destroy(mempool_t **pool)
