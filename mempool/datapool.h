@@ -5,14 +5,14 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define DATA_BUFFER_SIZE	256
+#define DATA_BUFFER_SIZE	512
 #define DATA_ELEMENT_SIZE	512
 
 #define STREAM_MAX_SIZE 	256
 #define DATA_MAX_SIZE 		512
 #define DATA_BASE_KEY 		8000
 
-#define TYPE_LONG			0x00
+#define TYPE_LONG		0x00
 #define TYPE_DOUBLE		0x01
 #define TYPE_STRING		0x02
 
