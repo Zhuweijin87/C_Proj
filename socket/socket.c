@@ -120,43 +120,6 @@ _END_:
 	return ret;
 }
 
-#if 0
-/*init sockfd*/
-int socket_create(char *ipaddr)
-{
-	int	servfd;
-	struct sockaddr_in server;
-
-	servfd = socket(AF_INET, SOCK_STREAM, 0);
-	if(servfd == -1){
-		fprintf(stderr, "fail to socket:%s\n", strerror(errno));
-		return -1;
-	}
-
-	char	addr_ip[20] = {'\0'};
-	int		addr_port;
-	if(sscanf(ipaddr, "%[^:]:%d", addr_ip, &addr_port) != 2){
-		fprintf(stderr, "fail to split address & port\n");
-		return -1;
-	}
-
-	printf("ip: %s, port:%d\n", addr_ip, addr_port);
-	server.sin_family = AF_INET;
-	server.sin_port = htonl(addr_port);
-	server.sin_addr.s_addr = inet_addr(addr_ip);
-	if(bind(servfd, (struct sockaddr *)&server, sizeof(struct sockaddr)) == -1){
-		fprintf(stderr, "fail to bind:%s\n", strerror(errno));
-		return -1;
-	}
-	
-	if(listen(servfd, MAX_LISTENER) == -1){
-		fprintf(stderr, "fail to listen:%s\n", strerror(errno));
-		return -1;
-	}
-	return servfd;
-}
-#endif
-
 /*for client*/
 int socket_connect(char *ipaddr)
 {

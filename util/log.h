@@ -1,6 +1,12 @@
 #ifndef _LOG_H
 #define _LOG_H
 
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <time.h>
+
 #define DEBUG	4
 #define WARN	3
 #define INFO	2

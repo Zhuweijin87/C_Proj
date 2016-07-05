@@ -99,8 +99,11 @@ int epoll_read(int sockfd, char *recvBuff)
 	ret = socket_recv(sockfd, recvBuff);	
 	if(ret == -1)
 	{
+		fprintf(stderr, "客户连接断开\n");
 		epoll_fd_del(sockfd);
+		return -1;
 	}
+
 	return 0;
 }
 
@@ -126,14 +129,19 @@ EPOLL_CYCLE_WATCH:
 			/*handle new client epoll*/
 			sockfd = pe[i].data.fd;
 			epoll_accept(sockfd);
+
 		}else if(pe[i].events & EPOLLIN){
 			/*handle read from epoll fd*/
 			sockfd = pe[i].data.fd;
 			(*pread)(&sockfd);
+
 		}else if(pe[i].events & EPOLLOUT){
 			/*handle write to epoll fd*/
 			sockfd = pe[i].data.fd;
 			(*pwrite)(&sockfd);
+		}
+		else{
+			;
 		}
 	}
 	goto EPOLL_CYCLE_WATCH;

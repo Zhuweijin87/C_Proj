@@ -39,7 +39,7 @@ static int datapool_get_element_val(TDataPool *dataPool, int dtype, int did, voi
 	}
 	else
 	{
-		;
+		return -9;
 	}
 	return 0;
 }

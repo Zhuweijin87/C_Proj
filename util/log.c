@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <time.h>
+#include "log.h"
 
 #define null	NULL
 
@@ -19,7 +15,7 @@ struct loginfo_t{
 	char	*homed;
 };
 
-static struct loginfo_t loginfo = {'\0'};
+static struct loginfo_t loginfo;
 static char	  wstream[MAX_LINE_SIZE];
 
 inline int OFFSET(const char *s)

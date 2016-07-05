@@ -14,14 +14,14 @@ struct queue_node{
 };
 typedef struct queue_node QNode;
 
-struct t_queue{
+struct queue_s{
 	int qsize;
 	int is_full;
 	int is_empty;
 	struct queue_node *head;
 	struct queue_node *tail;
 };
-typedef struct t_queue Queue;
+typedef struct queue_s Queue;
 
 #define tmalloc(size) malloc(size)
 

@@ -1,71 +1,28 @@
 #include "epoll.h"
 
-void write_html(char *ohtml);
-
-int Get_Buffer_Line(char *buffer, char *line, int *offset)
+void *OnRecv(void *arg)
 {
-	int pos = *offset;
-	char *d = line;
-	char *p = buffer + pos;
-	//printf("p -- : %s\n", p);
-	if(*p == '\r' || *(p+1) == '\n')
-		return -1;
-	while(*p != '\n')
-	{
-		*d++ = *p++;
-		pos++;
-	} 
-	*offset = pos + 1;
+	char msgbuf[1024] = {'\0'};
+	int fd = *(int *)arg;
 	
-	printf("line : [%d] %s\n", *offset, line);
-	
-	return 0;
-}
-
-void *OnRecv(void *argv)
-{
-	char	recvMsg[4096] = {'\0'};
-	int sockfd = *(int *)argv;
-	epoll_read(sockfd, recvMsg);
-
-	printf("recv: %s\n", recvMsg);
-#if 0
-	int     offset = 0;
-	char	line[256] = {'\0'};
-	while( Get_Buffer_Line(recvMsg, line, &offset) == 0 )
+	int ret = epoll_read(fd, msgbuf);
+	if(ret)
 	{
-		memset(line, 0 , 256);		
+		return (void *)-1;
 	}
-	printf("parse end\n");
-#endif	
-	char	outHtml[2048] = {'\0'};
-	write_html(outHtml);
-	
-	epoll_write(sockfd, outHtml);
+	printf("recv: %s\n", msgbuf);	
+
+	epoll_fd_mod(fd, FD_WRITABLE);
 
 	return (void *)0;
 }
 
-void write_html(char *ohtml)
+void *OnSend(void *arg)
 {
-	strcat(ohtml, "<!doctype html>\r\n");
-	strcat(ohtml, "<html>\r\n");
-	strcat(ohtml, "<head>\r\n");
-	strcat(ohtml, "<meta charset = \"utf-8\">\r\n");
-	strcat(ohtml, "<tilte> Uploader </title>\r\n");
-	strcat(ohtml, "</head>\r\n");
-	strcat(ohtml, "<body>\r\n");
-	strcat(ohtml, "<form method=\"post\" action=\"/upload\" enctype=\"multipart/form-data\">");
-	strcat(ohtml, "Choose an image to upload: <input name=\"image\" type=\"text\" />");
-	strcat(ohtml, "<input type=\"submit\" value=\"Upload\" />\r\n");
-	strcat(ohtml, "</form>\r\n");
-	strcat(ohtml, "</body>\r\n");
-	strcat(ohtml, "</html>\r\n");
-}
-
-void *OnSend(void *argv)
-{
-	printf("send\n");
+	int fd = *(int *)arg;
+	epoll_write(fd, "Hello Great Wall");
+	
+	epoll_fd_mod(fd, FD_READABLE);
 	
 	return (void *)0;
 }
@@ -73,7 +30,7 @@ void *OnSend(void *argv)
 int main()
 {
 	int servfd;
-#if 1
+
 	servfd = Tepoll_init("192.168.1.46:8003", 10);
 	if(servfd == -1)
 		return -1;
@@ -82,8 +39,6 @@ int main()
 	Tepoll_handle(servfd, &OnRecv, NULL, &OnSend, NULL);
 	
 	epoll_close(servfd);
-#endif
-	
 	
 	return 0;
 }
